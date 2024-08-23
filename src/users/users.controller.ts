@@ -17,6 +17,7 @@ import { AuthGuard } from "@/guards/auth.guard";
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { CreateUserDto } from "@/dtos/create-user.dto";
@@ -30,13 +31,19 @@ export class UsersController {
   @Post()
   @ApiTags("users")
   @ApiOperation({ summary: "Create a new user" })
-  async create(@Body(new ValidationPipe()) body: CreateUserDto): Promise<User> {
+  @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 409 })
+  async create(
+    @Body(new ValidationPipe()) body: CreateUserDto,
+  ): Promise<User | null> {
     return this.usersService.create(body);
   }
 
   @Get()
   @ApiTags("users")
   @ApiOperation({ summary: "Return all users" })
+  @ApiResponse({ status: 200 })
   async findAll(): Promise<User[]> {
     return this.usersService.findAll();
   }
@@ -44,6 +51,8 @@ export class UsersController {
   @Get(":id")
   @ApiTags("users")
   @ApiOperation({ summary: "Return a user" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
   async findOne(
     @Param("id", new ValidationPipe({ transform: true })) id: number,
   ): Promise<User | null> {
@@ -53,6 +62,9 @@ export class UsersController {
   @Patch(":id")
   @ApiTags("users")
   @ApiOperation({ summary: "Update a user" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async update(
@@ -71,10 +83,13 @@ export class UsersController {
   @Delete(":id")
   @ApiTags("users")
   @ApiOperation({ summary: "Delete a user" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async remove(
-    @Param("id") id: number,
+    @Param("id", new ValidationPipe({ transform: true })) id: number,
     @Req() req: AuthenticatedRequest,
   ): Promise<User> {
     if (req.user.sub !== id) {

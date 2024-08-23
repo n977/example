@@ -12,7 +12,12 @@ import {
   UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { Column } from "@prisma/client";
 import { AuthenticatedRequest } from "@/lib/auth";
 import { ColumnsService } from "src/board/columns.service";
@@ -24,6 +29,9 @@ export class ColumnsController {
   @Post()
   @ApiTags("board")
   @ApiOperation({ summary: "Create a new column" })
+  @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async create(
@@ -40,6 +48,8 @@ export class ColumnsController {
   @Get()
   @ApiTags("board")
   @ApiOperation({ summary: "Return all columns" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
   async findAll(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
   ): Promise<Column[]> {
@@ -59,6 +69,10 @@ export class ColumnsController {
   @Patch(":columnId")
   @ApiTags("board")
   @ApiOperation({ summary: "Update a column" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 501 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async update(
@@ -77,6 +91,9 @@ export class ColumnsController {
   @Delete(":columnId")
   @ApiTags("board")
   @ApiOperation({ summary: "Delete a column" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async remove(

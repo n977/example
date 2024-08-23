@@ -12,7 +12,12 @@ import {
   UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { Card } from "@prisma/client";
 import { AuthenticatedRequest } from "@/lib/auth";
 import { CardsService } from "src/board/cards.service";
@@ -24,6 +29,9 @@ export class CardsController {
   @Post()
   @ApiTags("board")
   @ApiOperation({ summary: "Create a new card" })
+  @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async createCard(
@@ -42,6 +50,8 @@ export class CardsController {
   @Get()
   @ApiTags("board")
   @ApiOperation({ summary: "Return all cards" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
   async findAll(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
@@ -53,6 +63,8 @@ export class CardsController {
   @Get(":cardId")
   @ApiTags("board")
   @ApiOperation({ summary: "Return a card" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
   async findOne(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
@@ -65,6 +77,10 @@ export class CardsController {
   @Patch(":cardId")
   @ApiTags("board")
   @ApiOperation({ summary: "Update a card" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 501 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async update(
@@ -84,6 +100,9 @@ export class CardsController {
   @Delete(":cardId")
   @ApiTags("board")
   @ApiOperation({ summary: "Delete a card" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async remove(

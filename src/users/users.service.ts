@@ -1,23 +1,36 @@
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { PrismaService } from "src/core/prisma.service";
 import * as bcrypt from "bcrypt";
 import { User } from "@prisma/client";
 import { CreateUserDto } from "@/dtos/create-user.dto";
 import { UpdateUserDto } from "@/dtos/update-user.dto";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User | null> {
     const hash = await bcrypt.hash(createUserDto.password, 10);
 
-    return this.prismaService.user.create({
-      data: {
-        email: createUserDto.email,
-        password: hash,
-      },
-    });
+    let user = null;
+
+    try {
+      user = await this.prismaService.user.create({
+        data: {
+          email: createUserDto.email,
+          password: hash,
+        },
+      });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === "P2002") {
+          throw new ConflictException();
+        }
+      }
+    }
+
+    return user;
   }
 
   async findAll(): Promise<User[]> {

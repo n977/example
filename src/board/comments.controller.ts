@@ -12,7 +12,12 @@ import {
   UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { Comment } from "@prisma/client";
 import { AuthenticatedRequest } from "@/lib/auth";
 import { CommentsService } from "src/board/comments.service";
@@ -24,6 +29,9 @@ export class CommentsController {
   @Post()
   @ApiTags("board")
   @ApiOperation({ summary: "Create a new comment" })
+  @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async createComment(
@@ -43,6 +51,8 @@ export class CommentsController {
   @Get()
   @ApiTags("board")
   @ApiOperation({ summary: "Return all comments" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
   async findAll(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
@@ -55,6 +65,8 @@ export class CommentsController {
   @Get(":commentId")
   @ApiTags("board")
   @ApiOperation({ summary: "Return a comment" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
   async findOne(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
@@ -69,6 +81,10 @@ export class CommentsController {
   @Patch(":commentId")
   @ApiTags("board")
   @ApiOperation({ summary: "Update a comment" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 501 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async update(
@@ -91,6 +107,9 @@ export class CommentsController {
   @Delete(":commentId")
   @ApiTags("board")
   @ApiOperation({ summary: "Delete a comment" })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiResponse({ status: 401 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async remove(
