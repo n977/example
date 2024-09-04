@@ -1,13 +1,19 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { UsersService } from "src/users/users.service";
 import * as bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
 import { AuthUserDto } from "@/dtos/auth-user.dto";
 import { ConfigService } from "@nestjs/config";
+
+export interface JwtToken {
+  access_token: string;
+  token_type: string;
+  expires_in: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -17,7 +23,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async auth(authUserDto: AuthUserDto) {
+  async login(authUserDto: AuthUserDto): Promise<JwtToken> {
     const user = await this.usersService.findOne(authUserDto.email);
 
     if (user === null) {
@@ -27,7 +33,7 @@ export class AuthService {
     const matches = await bcrypt.compare(authUserDto.password, user.password);
 
     if (!matches) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     const payload = {
@@ -38,11 +44,7 @@ export class AuthService {
     return {
       access_token,
       token_type: "Bearer",
-      expires_in: (
-        this.configService.getOrThrow<number>("JWT_TOKEN_EXPIRES_IN") *
-        24 *
-        3600
-      ).toString(),
+      expires_in: this.configService.get("JWT_EXPIRY")!,
     };
   }
 }

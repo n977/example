@@ -5,13 +5,18 @@ import { User } from "@prisma/client";
 import { CreateUserDto } from "@/dtos/create-user.dto";
 import { UpdateUserDto } from "@/dtos/update-user.dto";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User | null> {
-    const hash = await bcrypt.hash(createUserDto.password, 10);
+    const rounds = +this.configService.get("BCRYPT_ROUNDS")!;
+    const hash = await bcrypt.hash(createUserDto.password, rounds);
 
     let user = null;
 
@@ -24,6 +29,7 @@ export class UsersService {
       });
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
+        // User already exists.
         if (e.code === "P2002") {
           throw new ConflictException();
         }
@@ -58,8 +64,10 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const rounds = +this.configService.get("BCRYPT_ROUNDS")!;
     const hash =
-      updateUserDto.password && (await bcrypt.hash(updateUserDto.password, 10));
+      updateUserDto.password &&
+      (await bcrypt.hash(updateUserDto.password, rounds));
 
     return this.prismaService.user.update({
       data: {

@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   Req,
-  UnauthorizedException,
+  ForbiddenException,
   UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
@@ -32,6 +32,7 @@ export class ColumnsController {
   @ApiResponse({ status: 201 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async create(
@@ -39,7 +40,7 @@ export class ColumnsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Column> {
     if (req.user.sub !== userId) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     return this.columnsService.create(userId);
@@ -72,6 +73,7 @@ export class ColumnsController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiResponse({ status: 501 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
@@ -82,7 +84,7 @@ export class ColumnsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Column> {
     if (req.user.sub !== userId) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     throw new NotImplementedException();
@@ -94,6 +96,7 @@ export class ColumnsController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async remove(
@@ -103,7 +106,7 @@ export class ColumnsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Column> {
     if (req.user.sub !== userId) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     return this.columnsService.remove(userId, columnId);

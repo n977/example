@@ -10,9 +10,9 @@ export class AuthController {
   @Post("login")
   @ApiTags("auth")
   @ApiOperation({ summary: "Authenticate a user" })
-  @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiResponse({ status: 404 })
-  async auth(@Body() body: AuthUserDto) {
-    return this.authService.auth(body);
+  async login(@Body() authUserDto: AuthUserDto) {
+    return this.authService.login(authUserDto);
   }
 }

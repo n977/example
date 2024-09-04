@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   Req,
-  UnauthorizedException,
+  ForbiddenException,
   UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
@@ -32,6 +32,7 @@ export class CommentsController {
   @ApiResponse({ status: 201 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async createComment(
@@ -42,7 +43,7 @@ export class CommentsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Comment> {
     if (req.user.sub !== userId) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     return this.commentsService.create(userId, columnId, cardId);
@@ -84,6 +85,7 @@ export class CommentsController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiResponse({ status: 501 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
@@ -98,7 +100,7 @@ export class CommentsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Comment> {
     if (req.user.sub !== userId) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     throw new NotImplementedException();
@@ -110,6 +112,7 @@ export class CommentsController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async remove(
@@ -122,7 +125,7 @@ export class CommentsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Comment> {
     if (req.user.sub !== userId) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     return this.commentsService.remove(userId, columnId, cardId, commentId);

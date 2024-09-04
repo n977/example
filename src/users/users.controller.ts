@@ -2,12 +2,12 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
   Req,
-  UnauthorizedException,
   UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
@@ -35,9 +35,9 @@ export class UsersController {
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 409 })
   async create(
-    @Body(new ValidationPipe()) body: CreateUserDto,
+    @Body(new ValidationPipe()) createUserDto: CreateUserDto,
   ): Promise<User | null> {
-    return this.usersService.create(body);
+    return this.usersService.create(createUserDto);
   }
 
   @Get()
@@ -65,19 +65,20 @@ export class UsersController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async update(
     @Param("id", new ValidationPipe({ transform: true })) id: number,
     @Body(new ValidationPipe({ skipMissingProperties: true }))
-    body: UpdateUserDto,
+    updateUserDto: UpdateUserDto,
     @Req() req: AuthenticatedRequest,
   ): Promise<User> {
     if (req.user.sub !== id) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
-    return this.usersService.update(id, body);
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(":id")
@@ -86,6 +87,7 @@ export class UsersController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
+  @ApiResponse({ status: 403 })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   async remove(
@@ -93,7 +95,7 @@ export class UsersController {
     @Req() req: AuthenticatedRequest,
   ): Promise<User> {
     if (req.user.sub !== id) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     return this.usersService.remove(id);

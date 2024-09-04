@@ -6,15 +6,18 @@ import { PrismaService } from "src/core/prisma.service";
 @Global()
 @Module({
   imports: [
-    ConfigModule,
+    ConfigModule.forRoot({
+      cache: true,
+    }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         return {
-          global: true,
-          secret: configService.get<string>("JWT_KEY"),
-          expires: "7d",
+          secret: configService.get("JWT_KEY"),
+          signOptions: {
+            expiresIn: +configService.get("JWT_EXPIRY"),
+          },
         };
       },
     }),
