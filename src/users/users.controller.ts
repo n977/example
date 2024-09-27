@@ -22,82 +22,59 @@ import {
 } from "@nestjs/swagger";
 import { CreateUserDto } from "@/dtos/create-user.dto";
 import { UpdateUserDto } from "@/dtos/update-user.dto";
-import { AuthenticatedRequest } from "@/lib/auth";
+import { OwnerGuard } from "@/guards/owner.guard";
+import { Auth } from "@/decorators/auth.decorator";
+import { ApiDelete } from "@/decorators/delete.decorator";
+import { ApiUpdate } from "@/decorators/update.decorator";
+import { ApiCreate } from "@/decorators/create.decorator";
+import { ApiRead } from "@/decorators/read.decorator";
 
 @Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
   @ApiTags("users")
-  @ApiOperation({ summary: "Create a new user" })
-  @ApiResponse({ status: 201 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 409 })
-  async create(
-    @Body(new ValidationPipe()) createUserDto: CreateUserDto,
-  ): Promise<User | null> {
+  @ApiCreate({ summary: "Create a new user" })
+  @Post()
+  async create(@Body(new ValidationPipe()) createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
-  @Get()
   @ApiTags("users")
-  @ApiOperation({ summary: "Return all users" })
-  @ApiResponse({ status: 200 })
-  async findAll(): Promise<User[]> {
+  @ApiRead({ summary: "Return all users" })
+  @Get()
+  async findAll() {
     return this.usersService.findAll();
   }
 
-  @Get(":id")
   @ApiTags("users")
-  @ApiOperation({ summary: "Return a user" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
+  @ApiRead({ summary: "Return a user" })
+  @Get(":userId")
   async findOne(
-    @Param("id", new ValidationPipe({ transform: true })) id: number,
-  ): Promise<User | null> {
-    return this.usersService.findOne(id);
+    @Param("userId", new ValidationPipe({ transform: true })) userId: number,
+  ) {
+    return this.usersService.findOne(userId);
   }
 
-  @Patch(":id")
+  @ApiUpdate({ summary: "Update a user" })
   @ApiTags("users")
-  @ApiOperation({ summary: "Update a user" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @Auth({ owned: true })
+  @Patch(":userId")
   async update(
-    @Param("id", new ValidationPipe({ transform: true })) id: number,
+    @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Body(new ValidationPipe({ skipMissingProperties: true }))
     updateUserDto: UpdateUserDto,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<User> {
-    if (req.user.sub !== id) {
-      throw new ForbiddenException();
-    }
-
-    return this.usersService.update(id, updateUserDto);
+  ) {
+    return this.usersService.update(userId, updateUserDto);
   }
 
-  @Delete(":id")
+  @ApiDelete({ summary: "Delete a user" })
   @ApiTags("users")
-  @ApiOperation({ summary: "Delete a user" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @Auth({ owned: true })
+  @Delete(":userId")
   async remove(
-    @Param("id", new ValidationPipe({ transform: true })) id: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<User> {
-    if (req.user.sub !== id) {
-      throw new ForbiddenException();
-    }
-
-    return this.usersService.remove(id);
+    @Param("userId", new ValidationPipe({ transform: true })) userId: number,
+  ) {
+    return this.usersService.remove(userId);
   }
 }

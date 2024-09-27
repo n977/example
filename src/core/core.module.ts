@@ -1,6 +1,7 @@
 import { Module, Global } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
+import { config } from "src/config";
 import { PrismaService } from "src/core/prisma.service";
 
 @Global()
@@ -8,16 +9,14 @@ import { PrismaService } from "src/core/prisma.service";
   imports: [
     ConfigModule.forRoot({
       cache: true,
+      load: [config],
     }),
     JwtModule.registerAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         return {
-          secret: configService.get("JWT_KEY"),
-          signOptions: {
-            expiresIn: +configService.get("JWT_EXPIRY"),
-          },
+          privateKey: configService.get("keys.API_PRIVATE"),
+          publicKey: configService.get("keys.API_PUBLIC"),
         };
       },
     }),

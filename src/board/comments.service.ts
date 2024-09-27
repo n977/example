@@ -1,56 +1,48 @@
-import { Injectable } from "@nestjs/common";
+import { CreateColumnDto } from "@/dtos/create-column.dto";
+import { CreateCommentDto } from "@/dtos/create-comment.dto";
+import { UpdateCommentDto } from "@/dtos/update-comment.dto";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { Card, Comment } from "@prisma/client";
 import { PrismaService } from "src/core/prisma.service";
+import { CardsService } from "./cards.service";
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prismaService: PrismaService) {}
-
-  async findParent(
-    userId: number,
-    columnId: number,
-    cardId: number,
-  ): Promise<Card> {
-    const columns = await this.prismaService.column.findMany({
-      where: {
-        userId,
-      },
-    });
-    const cards = await this.prismaService.card.findMany({
-      where: {
-        columnId: columns[columnId - 1].id,
-      },
-    });
-
-    return cards[cardId - 1];
-  }
+  constructor(
+    private readonly cardsService: CardsService,
+    private readonly prismaService: PrismaService,
+  ) {}
 
   async create(
     userId: number,
     columnId: number,
     cardId: number,
-  ): Promise<Comment> {
-    const parent = await this.findParent(userId, columnId, cardId);
+    createCommentDto: CreateCommentDto,
+  ) {
+    const card = await this.cardsService.findOne(userId, columnId, cardId);
+
+    if (!card) throw new NotFoundException();
 
     return this.prismaService.comment.create({
       data: {
+        ...createCommentDto,
         userId,
-        cardId: parent.id,
+        columnId,
+        cardId,
       },
     });
   }
 
-  async findAll(
-    userId: number,
-    columnId: number,
-    cardId: number,
-  ): Promise<Comment[]> {
-    const parent = await this.findParent(userId, columnId, cardId);
-
+  async findAll(userId: number, columnId: number, cardId: number) {
     return this.prismaService.comment.findMany({
       where: {
         userId,
-        cardId: parent.id,
+        columnId,
+        cardId,
       },
     });
   }
@@ -60,10 +52,34 @@ export class CommentsService {
     columnId: number,
     cardId: number,
     commentId: number,
-  ): Promise<Comment | null> {
-    const comments = await this.findAll(userId, columnId, cardId);
+  ) {
+    return this.prismaService.comment.findUnique({
+      where: {
+        id: commentId,
+        userId,
+        columnId,
+        cardId,
+      },
+    });
+  }
 
-    return comments[commentId - 1];
+  async update(
+    userId: number,
+    columnId: number,
+    cardId: number,
+    commentId: number,
+    updateCommentDto: UpdateCommentDto,
+  ) {
+    const comment = await this.findOne(userId, columnId, cardId, commentId);
+
+    if (!comment) throw new NotFoundException();
+
+    return this.prismaService.comment.update({
+      where: {
+        id: commentId,
+      },
+      data: updateCommentDto,
+    });
   }
 
   async remove(
@@ -71,12 +87,14 @@ export class CommentsService {
     columnId: number,
     cardId: number,
     commentId: number,
-  ): Promise<Comment> {
+  ) {
     const comment = await this.findOne(userId, columnId, cardId, commentId);
+
+    if (!comment) throw new NotFoundException();
 
     return this.prismaService.comment.delete({
       where: {
-        id: comment?.id,
+        id: comment.id,
       },
     });
   }

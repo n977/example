@@ -11,9 +11,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@/dtos/*": ["./src/dtos/*"],
-      "@/guards/*": ["./src/guards/*"],
-      "@/lib/*": ["./src/lib/*"]
+      "@/*": ["./src/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

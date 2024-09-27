@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
 }
 
 datasource db {
@@ -8,34 +9,48 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  password String
-  columns  Column[]
-  cards    Card[]
-  comments Comment[]
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  columns   Column[]
+  cards     Card[]
+  comments  Comment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Column {
-  id     Int    @id @default(autoincrement())
-  user   User   @relation(fields: [userId], references: [id])
-  userId Int
-  cards  Card[]
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  cards     Card[]
+  comments  Comment[]
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Card {
-  id       Int       @id @default(autoincrement())
-  user     User      @relation(fields: [userId], references: [id])
-  userId   Int
-  column   Column    @relation(fields: [columnId], references: [id])
-  columnId Int
-  comments Comment[]
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  column    Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  columnId  Int
+  comments  Comment[]
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Comment {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
-  card   Card @relation(fields: [cardId], references: [id])
-  cardId Int
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  column    Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  columnId  Int
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  cardId    Int
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -11,6 +10,7 @@ import {
   ForbiddenException,
   UseGuards,
   ValidationPipe,
+  Body,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -18,107 +18,83 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Card } from "@prisma/client";
-import { AuthenticatedRequest } from "@/lib/auth";
+import { User } from "@prisma/client";
 import { CardsService } from "src/board/cards.service";
+import { CreateCardDto } from "@/dtos/create-card.dto";
+import { UpdateCardDto } from "@/dtos/update-card.dto";
+import { ApiCreate } from "@/decorators/create.decorator";
+import { Auth } from "@/decorators/auth.decorator";
+import { ApiRead } from "@/decorators/read.decorator";
+import { ApiDelete } from "@/decorators/delete.decorator";
+import { ApiUpdate } from "@/decorators/update.decorator";
 
 @Controller("users/:userId/columns/:columnId/cards")
 export class CardsController {
   constructor(private readonly cardsService: CardsService) {}
 
-  @Post()
   @ApiTags("board")
-  @ApiOperation({ summary: "Create a new card" })
-  @ApiResponse({ status: 201 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiCreate({ summary: "Create a new card" })
+  @Auth({ owned: true })
+  @Post()
   async createCard(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Card> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
-    return this.cardsService.create(userId, columnId);
+    @Body(new ValidationPipe({ transform: true })) createCardDto: CreateCardDto,
+  ) {
+    return this.cardsService.create(userId, columnId, createCardDto);
   }
 
-  @Get()
   @ApiTags("board")
-  @ApiOperation({ summary: "Return all cards" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
+  @ApiRead({ summary: "Return all cards" })
+  @Auth({ owned: true })
+  @Get()
   async findAll(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
-  ): Promise<Card[]> {
+  ) {
     return this.cardsService.findAll(userId, columnId);
   }
 
-  @Get(":cardId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Return a card" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
+  @ApiRead({ summary: "Return a card" })
+  @Auth({ owned: true })
+  @Get(":cardId")
   async findOne(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
     @Param("cardId", new ValidationPipe({ transform: true })) cardId: number,
-  ): Promise<Card | null> {
+  ) {
     return this.cardsService.findOne(userId, columnId, cardId);
   }
 
-  @Patch(":cardId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Update a card" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiResponse({ status: 501 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiUpdate({ summary: "Update a card" })
+  @Auth({ owned: true })
+  @Patch(":cardId")
   async update(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
-    _columnId: number,
-    @Param("cardId", new ValidationPipe({ transform: true })) _cardId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Card> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
-    throw new NotImplementedException();
+    columnId: number,
+    @Param("cardId", new ValidationPipe({ transform: true })) cardId: number,
+    @Body(new ValidationPipe({ skipMissingProperties: true }))
+    updateCardDto: UpdateCardDto,
+  ) {
+    return this.cardsService.update(userId, columnId, cardId, updateCardDto);
   }
 
-  @Delete(":cardId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Delete a card" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiDelete({ summary: "Delete a card" })
+  @Auth({ owned: true })
+  @Delete(":cardId")
   async remove(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
     @Param("cardId", new ValidationPipe({ transform: true })) cardId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Card> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
+  ) {
     return this.cardsService.remove(userId, columnId, cardId);
   }
 }

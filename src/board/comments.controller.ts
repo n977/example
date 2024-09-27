@@ -11,6 +11,7 @@ import {
   ForbiddenException,
   UseGuards,
   ValidationPipe,
+  Body,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -19,55 +20,56 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { Comment } from "@prisma/client";
-import { AuthenticatedRequest } from "@/lib/auth";
+
 import { CommentsService } from "src/board/comments.service";
+import { ApiCreate } from "@/decorators/create.decorator";
+import { CreateCommentDto } from "@/dtos/create-comment.dto";
+import { ApiRead } from "@/decorators/read.decorator";
+import { Auth } from "@/decorators/auth.decorator";
+import { ApiDelete } from "@/decorators/delete.decorator";
+import { UpdateCommentDto } from "@/dtos/update-comment.dto";
+import { ApiUpdate } from "@/decorators/update.decorator";
 
 @Controller("users/:userId/columns/:columnId/cards/:cardId/comments")
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
-  @Post()
   @ApiTags("board")
-  @ApiOperation({ summary: "Create a new comment" })
-  @ApiResponse({ status: 201 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiCreate({ summary: "Create a new comment" })
+  @Auth({ owned: true })
+  @Post()
   async createComment(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
     @Param("cardId", new ValidationPipe({ transform: true })) cardId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Comment> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
-    return this.commentsService.create(userId, columnId, cardId);
+    @Body() createCommentDto: CreateCommentDto,
+  ) {
+    return this.commentsService.create(
+      userId,
+      columnId,
+      cardId,
+      createCommentDto,
+    );
   }
 
-  @Get()
   @ApiTags("board")
-  @ApiOperation({ summary: "Return all comments" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
+  @ApiRead({ summary: "Return all comments" })
+  @Auth({ owned: true })
+  @Get()
   async findAll(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
     @Param("cardId") cardId: number,
-  ): Promise<Comment[]> {
+  ) {
     return this.commentsService.findAll(userId, columnId, cardId);
   }
 
-  @Get(":commentId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Return a comment" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
+  @ApiRead({ summary: "Return a comment" })
+  @Auth({ owned: true })
+  @Get(":commentId")
   async findOne(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
@@ -75,46 +77,36 @@ export class CommentsController {
     @Param("cardId", new ValidationPipe({ transform: true })) cardId: number,
     @Param("commentId", new ValidationPipe({ transform: true }))
     commentId: number,
-  ): Promise<Comment | null> {
+  ) {
     return this.commentsService.findOne(userId, columnId, cardId, commentId);
   }
 
-  @Patch(":commentId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Update a comment" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiResponse({ status: 501 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiUpdate({ summary: "Update a comment" })
+  @Auth({ owned: true })
+  @Patch(":commentId")
   async update(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
-    _columnId: number,
-    @Param("cardId", new ValidationPipe({ transform: true })) _cardId: number,
+    columnId: number,
+    @Param("cardId", new ValidationPipe({ transform: true })) cardId: number,
     @Param("commentId", new ValidationPipe({ transform: true }))
-    _commentId: number,
-
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Comment> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
-    throw new NotImplementedException();
+    commentId: number,
+    @Body() updateCommentDto: UpdateCommentDto,
+  ) {
+    return this.commentsService.update(
+      userId,
+      columnId,
+      cardId,
+      commentId,
+      updateCommentDto,
+    );
   }
 
-  @Delete(":commentId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Delete a comment" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiDelete({ summary: "Delete a comment" })
+  @Auth({ owned: true })
+  @Delete(":commentId")
   async remove(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
@@ -122,12 +114,7 @@ export class CommentsController {
     @Param("cardId", new ValidationPipe({ transform: true })) cardId: number,
     @Param("commentId", new ValidationPipe({ transform: true }))
     commentId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Comment> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
+  ) {
     return this.commentsService.remove(userId, columnId, cardId, commentId);
   }
 }

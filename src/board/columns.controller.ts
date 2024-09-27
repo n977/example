@@ -1,9 +1,15 @@
+import { Auth } from "@/decorators/auth.decorator";
+import { ApiCreate } from "@/decorators/create.decorator";
+import { ApiDelete } from "@/decorators/delete.decorator";
+import { ApiRead } from "@/decorators/read.decorator";
+import { ApiUpdate } from "@/decorators/update.decorator";
+import { CreateColumnDto } from "@/dtos/create-column.dto";
+import { UpdateColumnDto } from "@/dtos/update-column.dto";
 import { AuthGuard } from "@/guards/auth.guard";
 import {
   Controller,
   Delete,
   Get,
-  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -11,6 +17,7 @@ import {
   ForbiddenException,
   UseGuards,
   ValidationPipe,
+  Body,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -18,97 +25,69 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Column } from "@prisma/client";
-import { AuthenticatedRequest } from "@/lib/auth";
+import { User } from "@prisma/client";
 import { ColumnsService } from "src/board/columns.service";
 
 @Controller("users/:userId/columns")
 export class ColumnsController {
   constructor(private readonly columnsService: ColumnsService) {}
 
-  @Post()
   @ApiTags("board")
-  @ApiOperation({ summary: "Create a new column" })
-  @ApiResponse({ status: 201 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiCreate({ summary: "Create a new column" })
+  @Auth({ owned: true })
+  @Post()
   async create(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Column> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
-    return this.columnsService.create(userId);
+    @Body(new ValidationPipe()) createColumnDto: CreateColumnDto,
+  ) {
+    return this.columnsService.create(userId, createColumnDto);
   }
 
-  @Get()
   @ApiTags("board")
-  @ApiOperation({ summary: "Return all columns" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
+  @ApiRead({ summary: "Return all columns" })
+  @Auth({ owned: true })
+  @Get()
   async findAll(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
-  ): Promise<Column[]> {
+  ) {
     return this.columnsService.findAll(userId);
   }
-  @Get(":columnId")
+
   @ApiTags("board")
-  @ApiOperation({ summary: "Return a column" })
+  @ApiRead({ summary: "Return a column" })
+  @Auth({ owned: true })
+  @Get(":columnId")
   async findOne(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
-  ): Promise<Column | null> {
+  ) {
     return this.columnsService.findOne(userId, columnId);
   }
 
-  @Patch(":columnId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Update a column" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiResponse({ status: 501 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiUpdate({ summary: "Update a column" })
+  @Auth({ owned: true })
+  @Patch(":columnId")
   async update(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
-    _columnId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Column> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
-    throw new NotImplementedException();
+    columnId: number,
+    @Body(new ValidationPipe({ skipMissingProperties: true }))
+    updateColumnDto: UpdateColumnDto,
+  ) {
+    return this.columnsService.update(userId, columnId, updateColumnDto);
   }
 
-  @Delete(":columnId")
   @ApiTags("board")
-  @ApiOperation({ summary: "Delete a column" })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  @ApiResponse({ status: 403 })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @ApiDelete({ summary: "Delete a column" })
+  @Auth({ owned: true })
+  @Delete(":columnId")
   async remove(
     @Param("userId", new ValidationPipe({ transform: true })) userId: number,
     @Param("columnId", new ValidationPipe({ transform: true }))
     columnId: number,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Column> {
-    if (req.user.sub !== userId) {
-      throw new ForbiddenException();
-    }
-
+  ) {
     return this.columnsService.remove(userId, columnId);
   }
 }

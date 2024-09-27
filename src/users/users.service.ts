@@ -1,7 +1,6 @@
 import { ConflictException, Injectable } from "@nestjs/common";
 import { PrismaService } from "src/core/prisma.service";
-import * as bcrypt from "bcrypt";
-import { User } from "@prisma/client";
+import { hash } from "bcrypt";
 import { CreateUserDto } from "@/dtos/create-user.dto";
 import { UpdateUserDto } from "@/dtos/update-user.dto";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
@@ -14,22 +13,22 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User | null> {
-    const rounds = +this.configService.get("BCRYPT_ROUNDS")!;
-    const hash = await bcrypt.hash(createUserDto.password, rounds);
+  async create(createUserDto: CreateUserDto) {
+    const rounds = this.configService.get("consts.BCRYPT_ROUNDS");
+
+    const password = await hash(createUserDto.password, rounds);
 
     let user = null;
-
     try {
       user = await this.prismaService.user.create({
         data: {
           email: createUserDto.email,
-          password: hash,
+          password,
         },
       });
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
-        // User already exists.
+        // The user already exists.
         if (e.code === "P2002") {
           throw new ConflictException();
         }
@@ -39,13 +38,12 @@ export class UsersService {
     return user;
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll() {
     return this.prismaService.user.findMany();
   }
 
-  async findOne(key: number | string): Promise<User | null> {
-    let user;
-
+  async findOne(key: number | string) {
+    let user = null;
     if (typeof key === "number") {
       user = await this.prismaService.user.findUnique({
         where: {
@@ -63,16 +61,18 @@ export class UsersService {
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const rounds = +this.configService.get("BCRYPT_ROUNDS")!;
-    const hash =
-      updateUserDto.password &&
-      (await bcrypt.hash(updateUserDto.password, rounds));
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const rounds = this.configService.get("consts.BCRYPT_ROUNDS");
+
+    let password = updateUserDto.password;
+    if (password) {
+      password = await hash(password, rounds);
+    }
 
     return this.prismaService.user.update({
       data: {
         ...updateUserDto,
-        password: hash,
+        password,
       },
       where: {
         id,
@@ -80,7 +80,7 @@ export class UsersService {
     });
   }
 
-  async remove(id: number): Promise<User> {
+  async remove(id: number) {
     return this.prismaService.user.delete({
       where: {
         id,
